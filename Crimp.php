@@ -32,16 +32,17 @@ class Crimp
 		
 		$Master = curl_multi_init( );
 		
-		for( $i = 0; $i < $Settings->Threads; $i++ )
-		{
-			self::CreateNewHandle( $Master, $Settings->CurlOptions, $Urls );
-		}
-		
 		$Count = count( $Urls );
 		
 		if( $Settings->Threads > $Count )
 		{
 			$Settings->Threads = $Count;
+		}
+		
+		for( $i = 0; $i < $Settings->Threads; $i++ )
+		{
+			$Count--;
+			self::CreateNewHandle( $Master, $Settings->CurlOptions, $Urls );
 		}
 		
 		//curl_multi_setopt( $Master, CURLMOPT_PIPELINING, 1 );
