@@ -7,17 +7,10 @@ class Crimp
 	public $PreserveOrder = false;
 	public $CurlOptions =
 	[
-		CURLOPT_USERAGENT      => '',
 		CURLOPT_ENCODING       => 'gzip',
-		CURLOPT_HEADER         => 0,
-		CURLOPT_AUTOREFERER    => 0,
-		CURLOPT_RETURNTRANSFER => 1,
-		CURLOPT_FOLLOWLOCATION => 0,
 		CURLOPT_TIMEOUT        => 30,
 		CURLOPT_CONNECTTIMEOUT => 10,
-		CURLOPT_BINARYTRANSFER => 1,
-		CURLOPT_SSL_VERIFYPEER => 0, // todo
-		CURLOPT_SSL_VERIFYHOST => 0, // todo
+		CURLOPT_RETURNTRANSFER => 1,
 	];
 	
 	public function Go( array $Urls, callable $Callback )
