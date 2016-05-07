@@ -2,9 +2,30 @@
 
 class Crimp
 {
+	/**
+	 * @var string String to prepend to all URLs
+	 *
+	 * Use this to save memory when sending a lot of requests to same host
+	 */
 	public $UrlPrefix = '';
+	
+	/**
+	 * @var int How many concurrent requests should be going at the same time
+	 */
 	public $Threads = 10;
+	
+	/**
+	 * @var bool Set to true to preserve order of passed in $Urls
+	 *
+	 * array_pop is used for better performance, thus the requests are executed backwards
+	 * Setting this to true performs array_reverse on the urls
+	 */
 	public $PreserveOrder = false;
+	
+	/**
+	 * @var array cURL options to be set on each handle
+	 * @see https://php.net/curl_setopt
+	 */
 	public $CurlOptions =
 	[
 		CURLOPT_ENCODING       => 'gzip',
@@ -13,6 +34,14 @@ class Crimp
 		CURLOPT_RETURNTRANSFER => 1,
 	];
 	
+	/**
+	 * Initializes a new instance of the SteamID class.
+	 *
+	 * It automatically guesses which type the input is, and works from there.
+	 *
+	 * @param array    $Urls      Array of urls to request
+	 * @param callback $Callback  Callback
+	 */
 	public function Go( array $Urls, callable $Callback )
 	{
 		if( isset( $this->CurlOptions[ CURLOPT_URL ] ) )
