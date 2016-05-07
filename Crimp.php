@@ -98,6 +98,8 @@ class Crimp
 				
 				if( $Count > 0 )
 				{
+					$Running = true;
+					
 					$Count--;
 					
 					curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $Urls ) );
@@ -107,12 +109,6 @@ class Crimp
 				{
 					curl_close( $Handle );
 				}
-			}
-			
-			// todo review
-			if( !$Running )
-			{
-				$Running = $Count > 0;
 			}
 			
 			if( $Running )
