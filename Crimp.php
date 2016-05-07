@@ -25,6 +25,11 @@ class Crimp
 {
 	public static function Go( CrimpSettings $Settings, array $Urls, callable $Callback )
 	{
+		if( isset( $Settings->CurlOptions[ CURLOPT_URL ] ) )
+		{
+			throw new \InvalidArgumentException( 'cURL options must not contain CURLOPT_URL, it is set during run time' );
+		}
+		
 		if( $Settings->PreserveOrder )
 		{
 			$Urls = array_reverse( $Urls );
