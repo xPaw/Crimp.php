@@ -65,7 +65,7 @@ class Crimp
 			
 			if( $Exec !== CURLM_OK )
 			{
-				break;
+				throw new \RuntimeException( 'curl_multi_exec failed: ' . $Exec . ' - ' . curl_multi_strerror( $Exec ) );
 			}
 			
 			while( $Done = curl_multi_info_read( $Master ) )
