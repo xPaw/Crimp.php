@@ -1,6 +1,6 @@
 <?php
 
-class CrimpSettings
+class Crimp
 {
 	public $UrlPrefix = '';
 	public $Threads = 10;
@@ -19,18 +19,15 @@ class CrimpSettings
 		CURLOPT_SSL_VERIFYPEER => 0, // todo
 		CURLOPT_SSL_VERIFYHOST => 0, // todo
 	];
-}
-
-class Crimp
-{
-	public static function Go( CrimpSettings $Settings, array $Urls, callable $Callback )
+	
+	public function Go( array $Urls, callable $Callback )
 	{
-		if( isset( $Settings->CurlOptions[ CURLOPT_URL ] ) )
+		if( isset( $this->CurlOptions[ CURLOPT_URL ] ) )
 		{
 			throw new \InvalidArgumentException( 'cURL options must not contain CURLOPT_URL, it is set during run time' );
 		}
 		
-		if( $Settings->PreserveOrder )
+		if( $this->PreserveOrder )
 		{
 			$Urls = array_reverse( $Urls );
 		}
@@ -39,25 +36,25 @@ class Crimp
 		
 		$Count = count( $Urls );
 		
-		if( $Settings->Threads > $Count )
+		if( $this->Threads > $Count )
 		{
-			$Settings->Threads = $Count;
+			$this->Threads = $Count;
 		}
 		
-		for( $i = 0; $i < $Settings->Threads; $i++ )
+		for( $i = 0; $i < $this->Threads; $i++ )
 		{
 			$Count--;
 			
 			$Handle = curl_init( );
 			
-			curl_setopt_array( $Handle, $Settings->CurlOptions );
-			curl_setopt( $Handle, CURLOPT_URL, $Settings->UrlPrefix . array_pop( $Urls ) );
+			curl_setopt_array( $Handle, $this->CurlOptions );
+			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $Urls ) );
 			curl_multi_add_handle( $Master, $Handle );
 		}
 		
 		//curl_multi_setopt( $Master, CURLMOPT_PIPELINING, 1 );
 		// todo review
-		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $Settings->Threads * 2 );
+		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $this->Threads * 2 );
 		
 		do
 		{
@@ -81,7 +78,7 @@ class Crimp
 				{
 					$Count--;
 					
-					curl_setopt( $Handle, CURLOPT_URL, $Settings->UrlPrefix . array_pop( $Urls ) );
+					curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $Urls ) );
 					curl_multi_add_handle( $Master, $Handle );
 				}
 				else
