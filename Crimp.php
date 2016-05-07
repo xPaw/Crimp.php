@@ -42,7 +42,12 @@ class Crimp
 		for( $i = 0; $i < $Settings->Threads; $i++ )
 		{
 			$Count--;
-			self::CreateNewHandle( $Master, $Settings->CurlOptions, $Urls );
+			
+			$Handle = curl_init( );
+			
+			curl_setopt_array( $Handle, $Settings->CurlOptions );
+			curl_setopt( $Handle, CURLOPT_URL, $Settings->UrlPrefix . array_pop( $Urls ) );
+			curl_multi_add_handle( $Master, $Handle );
 		}
 		
 		//curl_multi_setopt( $Master, CURLMOPT_PIPELINING, 1 );
@@ -61,19 +66,23 @@ class Crimp
 			while( $Done = curl_multi_info_read( $Master ) )
 			{
 				$Handle = $Done[ 'handle' ];
-				$Data  = curl_multi_getcontent( $Handle );
+				$Data   = curl_multi_getcontent( $Handle );
 				
 				call_user_func( $Callback, $Handle, $Data );
 				
-				if( $Count-- >= 0 )
-				{
-					self::CreateNewHandle( $Master, $Settings->CurlOptions, $Urls );
-				}
-				
 				curl_multi_remove_handle( $Master, $Handle );
-				curl_close( $Handle );
 				
-				unset( $Handle, $Data );
+				if( $Count > 0 )
+				{
+					$Count--;
+					
+					curl_setopt( $Handle, CURLOPT_URL, $Settings->UrlPrefix . array_pop( $Urls ) );
+					curl_multi_add_handle( $Master, $Handle );
+				}
+				else
+				{
+					curl_close( $Handle );
+				}
 			}
 			
 			// todo review
@@ -93,15 +102,5 @@ class Crimp
 		while( $Running );
 		
 		curl_multi_close( $Master );
-	}
-	
-	// todo review byref
-	private static function CreateNewHandle( &$Master, &$Options, &$Urls )
-	{
-		$Handle = curl_init( );
-		$Options[ CURLOPT_URL ] = $Settings->UrlPrefix . array_pop( $Urls );
-		
-		curl_setopt_array( $Handle, $Options );
-		curl_multi_add_handle( $Master, $Handle );
 	}
 }
