@@ -57,13 +57,14 @@ class Crimp
 		$Master = curl_multi_init( );
 		
 		$Count = count( $Urls );
+		$Threads = $this->Threads;
 		
-		if( $this->Threads > $Count )
+		if( $Threads > $Count )
 		{
-			$this->Threads = $Count;
+			$Threads = $Count;
 		}
 		
-		for( $i = 0; $i < $this->Threads; $i++ )
+		for( $i = 0; $i < $Threads; $i++ )
 		{
 			$Count--;
 			
@@ -76,7 +77,7 @@ class Crimp
 		
 		//curl_multi_setopt( $Master, CURLMOPT_PIPELINING, 1 );
 		// todo review
-		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $this->Threads * 2 );
+		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $Threads * 2 );
 		
 		do
 		{
