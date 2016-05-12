@@ -54,8 +54,6 @@ class Crimp
 			$Urls = array_reverse( $Urls );
 		}
 		
-		$Master = curl_multi_init( );
-		
 		$Count = count( $Urls );
 		$Threads = $this->Threads;
 		
@@ -63,6 +61,9 @@ class Crimp
 		{
 			$Threads = $Count;
 		}
+		
+		$Master = curl_multi_init( );
+		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $Threads );
 		
 		for( $i = 0; $i < $Threads; $i++ )
 		{
@@ -75,20 +76,11 @@ class Crimp
 			curl_multi_add_handle( $Master, $Handle );
 		}
 		
-		//curl_multi_setopt( $Master, CURLMOPT_PIPELINING, 1 );
-		// todo review
-		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $Threads * 2 );
-		
 		do
 		{
-			while( ( $Exec = curl_multi_exec( $Master, $Running ) ) === CURLM_CALL_MULTI_PERFORM );
+			curl_multi_exec( $Master, $Running );
 			
-			if( $Exec !== CURLM_OK )
-			{
-				throw new \RuntimeException( 'curl_multi_exec failed: ' . $Exec . ' - ' . curl_multi_strerror( $Exec ) );
-			}
-			
-			while( $Done = curl_multi_info_read( $Master ) )
+			while( $Done = curl_multi_info_read( $Masters ) )
 			{
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
@@ -110,14 +102,16 @@ class Crimp
 				{
 					curl_close( $Handle );
 				}
+				
+				if( $Running )
+				{
+					curl_multi_exec( $Master, $Running );
+				}
 			}
 			
 			if( $Running )
 			{
-				if( curl_multi_select( $Master, 1.0 ) === -1 )
-				{
-					usleep( 500 );
-				}
+				while( curl_multi_select( $Master, 0.1 ) === 0 );
 			}
 		}
 		while( $Running );
