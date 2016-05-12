@@ -80,7 +80,7 @@ class Crimp
 		{
 			curl_multi_exec( $Master, $Running );
 			
-			while( $Done = curl_multi_info_read( $Masters ) )
+			while( $Done = curl_multi_info_read( $Master ) )
 			{
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
