@@ -63,7 +63,6 @@ class Crimp
 		}
 		
 		$Master = curl_multi_init( );
-		curl_multi_setopt( $Master, CURLMOPT_MAXCONNECTS, $Threads );
 		
 		for( $i = 0; $i < $Threads; $i++ )
 		{
