@@ -23,6 +23,21 @@ class Crimp
 	public $PreserveOrder = false;
 	
 	/**
+	 * @var array Links to fetch
+	 *
+	 * Links are removed from this array during Go() function's runtime
+	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow)
+	 */
+	public $Urls = [];
+	
+	/**
+	 * @var callable Callback to be called on every executed url
+	 *
+	 * Callback 
+	 */
+	public $Callback;
+	
+	/**
 	 * @var array cURL options to be set on each handle
 	 * @see https://php.net/curl_setopt
 	 */
@@ -35,14 +50,19 @@ class Crimp
 	];
 	
 	/**
-	 * Initializes a new instance of the SteamID class.
+	 * Initializes a new instance of the Crimp class
 	 *
-	 * It automatically guesses which type the input is, and works from there.
-	 *
-	 * @param array    $Urls      Array of urls to request
-	 * @param callback $Callback  Callback
+	 * @param callback $Callback Callback
 	 */
-	public function Go( array $Urls, callable $Callback )
+	public function __construct( callable $Callback )
+	{
+		$this->Callback = $Callback;
+	}
+	
+	/**
+	 * Runs the multi curl
+	 */
+	public function Go( )
 	{
 		if( isset( $this->CurlOptions[ CURLOPT_URL ] ) )
 		{
@@ -51,10 +71,10 @@ class Crimp
 		
 		if( $this->PreserveOrder )
 		{
-			$Urls = array_reverse( $Urls );
+			$this->Urls = array_reverse( $this->Urls );
 		}
 		
-		$Count = count( $Urls );
+		$Count = count( $this->Urls );
 		$Threads = $this->Threads;
 		
 		if( $Threads > $Count )
@@ -64,14 +84,14 @@ class Crimp
 		
 		$Master = curl_multi_init( );
 		
-		for( $i = 0; $i < $Threads; $i++ )
+		while( $Threads-- > 0 )
 		{
 			$Count--;
 			
 			$Handle = curl_init( );
 			
 			curl_setopt_array( $Handle, $this->CurlOptions );
-			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $Urls ) );
+			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $this->Urls ) );
 			curl_multi_add_handle( $Master, $Handle );
 		}
 		
@@ -84,7 +104,7 @@ class Crimp
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 				
-				call_user_func( $Callback, $Handle, $Data );
+				call_user_func( $this->Callback, $Handle, $Data );
 				
 				curl_multi_remove_handle( $Master, $Handle );
 				
@@ -94,7 +114,7 @@ class Crimp
 					
 					$Count--;
 					
-					curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $Urls ) );
+					curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $this->Urls ) );
 					curl_multi_add_handle( $Master, $Handle );
 				}
 				else
@@ -105,6 +125,7 @@ class Crimp
 				if( $Running )
 				{
 					curl_multi_exec( $Master, $Running );
+					curl_multi_select( $Master, 0 );
 				}
 			}
 			
