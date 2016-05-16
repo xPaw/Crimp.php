@@ -1,5 +1,13 @@
 <?php
-
+/**
+ * A dead simple multi curl implementation.
+ *
+ * GitHub: {@link https://github.com/xPaw/Crimp.php}
+ * Website: {@link https://xpaw.me}
+ *
+ * @author Pavel Djundik
+ * @license MIT
+ */
 class Crimp
 {
 	/**
