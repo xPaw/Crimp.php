@@ -23,10 +23,13 @@ class Crimp
 	public $PreserveOrder = false;
 	
 	/**
-	 * @var array Links to fetch
+	 * @var array Links to fetch.
 	 *
-	 * Links are removed from this array during Go() function's runtime
-	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow)
+	 * Links are removed from this array during Go() function's runtime.
+	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow).
+	 *
+	 * If the array contains arrays or objects, 'Url' property will be accessed.
+	 * First element in the array is used to determine the type.
 	 */
 	public $Urls = [];
 	
@@ -59,6 +62,9 @@ class Crimp
 		$this->Callback = $Callback;
 	}
 	
+	private $CurrentType;
+	private $CurrentHandles = [];
+	
 	/**
 	 * Runs the multi curl
 	 */
@@ -74,6 +80,7 @@ class Crimp
 			$this->Urls = array_reverse( $this->Urls );
 		}
 		
+		$this->CurrentType = gettype( reset( $this->Urls ) );
 		$Count = count( $this->Urls );
 		$Threads = $this->Threads;
 		
@@ -91,8 +98,8 @@ class Crimp
 			$Handle = curl_init( );
 			
 			curl_setopt_array( $Handle, $this->CurlOptions );
-			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $this->Urls ) );
-			curl_multi_add_handle( $Master, $Handle );
+			
+			$this->NextUrl( $Master, $Handle );
 		}
 		
 		do
@@ -104,7 +111,7 @@ class Crimp
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 				
-				call_user_func( $this->Callback, $Handle, $Data );
+				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ (int)$Handle ] );
 				
 				curl_multi_remove_handle( $Master, $Handle );
 				
@@ -114,12 +121,13 @@ class Crimp
 					
 					$Count--;
 					
-					curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . array_pop( $this->Urls ) );
-					curl_multi_add_handle( $Master, $Handle );
+					$this->NextUrl( $Master, $Handle );
 				}
 				else
 				{
 					curl_close( $Handle );
+					
+					unset( $this->CurrentHandles[ (int)$Handle ] );
 				}
 				
 				if( $Running )
@@ -137,5 +145,29 @@ class Crimp
 		while( $Running );
 		
 		curl_multi_close( $Master );
+	}
+	
+	private function NextUrl( $Master, $Handle )
+	{
+		$Obj = array_pop( $this->Urls );
+		
+		switch( $this->CurrentType )
+		{
+			case 'object':
+				$Url = $Obj->Url;
+				break;
+			
+			case 'array':
+				$Url = $Obj[ 'Url' ];
+				break;
+			
+			default:
+				$Url = (string)$Obj;
+		}
+		
+		curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
+		curl_multi_add_handle( $Master, $Handle );
+		
+		$this->CurrentHandles[ (int)$Handle ] = $Obj;
 	}
 }
