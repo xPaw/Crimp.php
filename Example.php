@@ -5,14 +5,16 @@ require __DIR__ . '/Crimp.php';
 $TotalTime = 0.0;
 $StartTime = microtime( true );
 
-$Crimp = new Crimp;
-$Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
-$Crimp->Go([
+$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp->Urls =
+[
 	'https://cloudflare.com',
 	'https://news.ycombinator.com',
 	'https://www.google.com',
 	'https://www.yahoo.com',
-], 'CrimpCallback');
+];
+$Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
+$Crimp->Go();
 
 $FinalTime = microtime( true ) - $StartTime;
 
