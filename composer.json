@@ -1,0 +1,23 @@
+{
+	"name": "xpaw/crimp",
+	"description": "A dead simple multi curl implementation, optimized for high concurrency",
+	"license": "MIT",
+	"homepage": "https://github.com/xPaw/Crimp.php",
+	"keywords":
+	[
+		"curl",
+		"async"
+	],
+	"require":
+	{
+		"php": ">=5.4",
+		"lib-curl": "*"
+	},
+	"autoload":
+	{
+		"files":
+		[
+			"Crimp.php"
+		]
+	}
+}
