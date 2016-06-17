@@ -1,4 +1,5 @@
-# Crimp
+# Crimp [![Packagist](https://img.shields.io/packagist/dt/xpaw/crimp.svg)](https://packagist.org/packages/xpaw/crimp)
+
 A dead simple multi curl implementation.
 
 This is practically a bare bones implemention.
