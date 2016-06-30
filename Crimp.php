@@ -92,7 +92,12 @@ class Crimp
 		$Count = count( $this->Urls );
 		$Threads = $this->Threads;
 		
-		if( $Threads > $Count )
+		if( $Count === 0 )
+		{
+			throw new \InvalidArgumentException( 'No URLs to fetch' );
+		}
+		
+		if( $Threads > $Count || $Threads <= 0 )
 		{
 			$Threads = $Count;
 		}
