@@ -83,19 +83,20 @@ class Crimp
 			throw new \InvalidArgumentException( 'cURL options must not contain CURLOPT_URL, it is set during run time' );
 		}
 		
+		$Count = count( $this->Urls );
+		
+		if( $Count === 0 )
+		{
+			throw new \InvalidArgumentException( 'No URLs to fetch' );
+		}
+		
 		if( $this->PreserveOrder )
 		{
 			$this->Urls = array_reverse( $this->Urls );
 		}
 		
 		$this->CurrentType = gettype( reset( $this->Urls ) );
-		$Count = count( $this->Urls );
 		$Threads = $this->Threads;
-		
-		if( $Count === 0 )
-		{
-			throw new \InvalidArgumentException( 'No URLs to fetch' );
-		}
 		
 		if( $Threads > $Count || $Threads <= 0 )
 		{
