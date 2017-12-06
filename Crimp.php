@@ -118,7 +118,11 @@ class Crimp
 		
 		do
 		{
-			curl_multi_exec( $Master, $Running );
+			if( curl_multi_exec( $Master, $Running ) !== CURLM_OK )
+			{
+				throw new \RuntimeException( 'curl_multi_exec failed. error: ' .
+					( function_exists( 'curl_multi_errno' ) ? curl_multi_errno() : '???' ) );
+			}
 			
 			while( $Done = curl_multi_info_read( $Master ) )
 			{
@@ -143,17 +147,11 @@ class Crimp
 					
 					unset( $this->CurrentHandles[ (int)$Handle ] );
 				}
-				
-				if( $Running )
-				{
-					curl_multi_exec( $Master, $Running );
-					curl_multi_select( $Master, 0 );
-				}
 			}
 			
-			if( $Running )
+			if( $Running && curl_multi_select( $Master, 0.1 ) === -1 )
 			{
-				while( curl_multi_select( $Master, 0.1 ) === 0 );
+				usleep( 100 );
 			}
 		}
 		while( $Running );
