@@ -121,7 +121,7 @@ class Crimp
 			if( curl_multi_exec( $Master, $Running ) !== CURLM_OK )
 			{
 				throw new \RuntimeException( 'curl_multi_exec failed. error: ' .
-					( function_exists( 'curl_multi_errno' ) ? curl_multi_errno() : '???' ) );
+					( function_exists( 'curl_multi_errno' ) ? curl_multi_errno( $Master ) : '???' ) );
 			}
 			
 			while( $Done = curl_multi_info_read( $Master ) )
