@@ -67,6 +67,13 @@ class Crimp
 	 */
 	public function __construct( callable $Callback )
 	{
+		// CURLOPT_TFTP_NO_OPTIONS is available since PHP 7.0.7 and cURL 7.48.0
+		// We need at least curl 7.48.0 due to various fixes in the library
+		if( !defined( 'CURLOPT_TFTP_NO_OPTIONS' ) )
+		{
+			throw new \RuntimeException( 'Your PHP version is not supported as CURLOPT_TFTP_NO_OPTIONS is not defined.' );
+		}
+
 		$this->Callback = $Callback;
 	}
 	
@@ -116,12 +123,13 @@ class Crimp
 			$this->NextUrl( $Master, $Handle );
 		}
 		
+		$Repeats = 0;
+
 		do
 		{
 			if( curl_multi_exec( $Master, $Running ) !== CURLM_OK )
 			{
-				throw new \RuntimeException( 'curl_multi_exec failed. error: ' .
-					( function_exists( 'curl_multi_errno' ) ? curl_multi_errno( $Master ) : '???' ) );
+				throw new \RuntimeException( 'curl_multi_exec failed. error: ' . curl_multi_errno( $Master ) );
 			}
 			
 			while( $Done = curl_multi_info_read( $Master ) )
@@ -149,9 +157,27 @@ class Crimp
 				}
 			}
 			
-			if( $Running && curl_multi_select( $Master, 0.1 ) === -1 )
+			if( $Running )
 			{
-				usleep( 100 );
+				$Descriptors = curl_multi_select( $Master, 0.1 );
+
+				if( $Descriptors === -1 && curl_multi_errno( $Master ) !== CURLM_OK )
+				{
+					throw new \RuntimeException( 'curl_multi_select failed. error: ' . curl_multi_errno( $Master ) );
+				}
+
+				// count number of repeated zero numfds
+				if( $Descriptors === 0 )
+				{
+					if( ++$Repeats > 1 )
+					{
+						usleep( 100 );
+					}
+				}
+				else
+				{
+					$Repeats = 0;
+				}
 			}
 		}
 		while( $Running );

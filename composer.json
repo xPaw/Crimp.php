@@ -5,13 +5,14 @@
 	"homepage": "https://github.com/xPaw/Crimp.php",
 	"keywords":
 	[
+		"rolling",
 		"curl",
 		"async"
 	],
 	"require":
 	{
-		"php": ">=5.4",
-		"lib-curl": "*"
+		"php": ">=7.1",
+		"ext-curl": "*"
 	},
 	"autoload":
 	{
