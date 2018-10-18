@@ -116,6 +116,13 @@ class Crimp
 		{
 			$Count--;
 			
+			if( $this->CurrentType === 'resource' )
+			{
+				$this->NextUrl( $Master );
+
+				continue;
+			}
+
 			$Handle = curl_init( );
 			
 			curl_setopt_array( $Handle, $this->CurlOptions );
@@ -185,12 +192,22 @@ class Crimp
 		curl_multi_close( $Master );
 	}
 	
-	private function NextUrl( $Master, $Handle )
+	private function NextUrl( $Master, $Handle = null )
 	{
 		$Obj = array_pop( $this->Urls );
 		
 		switch( $this->CurrentType )
 		{
+			case 'resource':
+				if( $Handle !== null )
+				{
+					curl_close( $Handle );
+				}
+				
+				curl_multi_add_handle( $Master, $Obj );
+				$this->CurrentHandles[ (int)$Obj ] = null;
+				return;
+
 			case 'object':
 				$Url = $Obj->Url;
 				break;
