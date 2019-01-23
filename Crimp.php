@@ -63,7 +63,9 @@ class Crimp
 	/**
 	 * Initializes a new instance of the Crimp class
 	 *
-	 * @param callback $Callback Callback
+	 * @param callable $Callback Callback
+	 *
+	 * @throws RuntimeException
 	 */
 	public function __construct( callable $Callback )
 	{
@@ -77,11 +79,23 @@ class Crimp
 		$this->Callback = $Callback;
 	}
 	
+	/**
+	 * @var string|null
+	 */
 	private $CurrentType;
+	
+	/**
+	 * @var array
+	 */
 	private $CurrentHandles = [];
 	
 	/**
 	 * Runs the multi curl
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException
+	 * @throws RuntimeException
 	 */
 	public function Go( )
 	{
@@ -150,7 +164,7 @@ class Crimp
 				
 				if( $Count > 0 )
 				{
-					$Running = true;
+					$Running = 1;
 					
 					$Count--;
 					
@@ -164,7 +178,7 @@ class Crimp
 				}
 			}
 			
-			if( $Running )
+			if( $Running > 0 )
 			{
 				$Descriptors = curl_multi_select( $Master, 0.1 );
 
@@ -192,6 +206,11 @@ class Crimp
 		curl_multi_close( $Master );
 	}
 	
+	/**
+	 * @param resource $Master
+	 * @param resource|null $Handle
+	 * @return void
+	 */
 	private function NextUrl( $Master, $Handle = null )
 	{
 		$Obj = array_pop( $this->Urls );
