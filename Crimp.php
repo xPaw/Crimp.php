@@ -257,7 +257,7 @@ class Crimp
 
 		if( $this->NextUrlCallback )
 		{
-			call_user_func( $this->NextUrlCallback, $Handle, $Obj );
+			call_user_func( $this->NextUrlCallback, $Handle, $Obj, $Url );
 		}
 
 		curl_multi_add_handle( $Master, $Handle );
