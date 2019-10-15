@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * A dead simple multi curl implementation.
  *
@@ -47,6 +49,13 @@ class Crimp
 	 * Callback 
 	 */
 	public $Callback;
+
+	/**
+	 * @var callable Callback to be called on every executed url
+	 *
+	 * Callback 
+	 */
+	public $NextUrlCallback;
 	
 	/**
 	 * @var array cURL options to be set on each handle
@@ -54,7 +63,7 @@ class Crimp
 	 */
 	public $CurlOptions =
 	[
-		CURLOPT_ENCODING       => 'gzip',
+		CURLOPT_ENCODING       => '',
 		CURLOPT_TIMEOUT        => 30,
 		CURLOPT_CONNECTTIMEOUT => 10,
 		CURLOPT_RETURNTRANSFER => 1,
@@ -79,6 +88,11 @@ class Crimp
 		$this->Callback = $Callback;
 	}
 	
+	public function SetNextUrlCallback( callable $Callback )
+	{
+		$this->NextUrlCallback = $Callback;
+	}
+
 	/**
 	 * @var string|null
 	 */
@@ -164,7 +178,7 @@ class Crimp
 				
 				if( $Count > 0 )
 				{
-					$Running = 1;
+					$Running = true;
 					
 					$Count--;
 					
@@ -178,7 +192,7 @@ class Crimp
 				}
 			}
 			
-			if( $Running > 0 )
+			if( $Running )
 			{
 				$Descriptors = curl_multi_select( $Master, 0.1 );
 
@@ -240,6 +254,12 @@ class Crimp
 		}
 		
 		curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
+
+		if( $this->NextUrlCallback )
+		{
+			call_user_func( $this->NextUrlCallback, $Handle, $Obj );
+		}
+
 		curl_multi_add_handle( $Master, $Handle );
 		
 		$this->CurrentHandles[ (int)$Handle ] = $Obj;
