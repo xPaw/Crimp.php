@@ -55,7 +55,7 @@ class Crimp
 	 *
 	 * Callback 
 	 */
-	public $NextUrlCallback;
+	public $NextUrlCallback = null;
 	
 	/**
 	 * @var array cURL options to be set on each handle
@@ -191,7 +191,7 @@ class Crimp
 				
 				if( $Count > 0 )
 				{
-					$Running = true;
+					$Running = 1;
 					
 					$Count--;
 					
@@ -266,14 +266,16 @@ class Crimp
 				$Url = (string)$Obj;
 		}
 		
-		curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
-
-		if( $this->NextUrlCallback )
+		if( $this->NextUrlCallback !== null )
 		{
 			call_user_func( $this->NextUrlCallback, $Handle, $Obj, $Url );
 		}
-
-		curl_multi_add_handle( $Master, $Handle );
+		
+		if( $Handle !== null )
+		{
+			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
+			curl_multi_add_handle( $Master, $Handle );
+		}
 		
 		$this->CurrentHandles[ (int)$Handle ] = $Obj;
 	}
