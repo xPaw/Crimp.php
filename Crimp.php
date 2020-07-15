@@ -130,7 +130,20 @@ class Crimp
 			$this->Urls = array_reverse( $this->Urls );
 		}
 		
-		$this->CurrentType = gettype( reset( $this->Urls ) );
+		$FirstHandle = reset( $this->Urls );
+		
+		if( is_a( $FirstHandle, 'CurlHandle' ) )
+		{
+			// Since PHP8, curl_init returns CurlHandle instead of a resource
+			$this->CurrentType = 'resource';
+		}
+		else
+		{
+			$this->CurrentType = gettype( $FirstHandle );
+		}
+		
+		unset( $FirstHandle );
+		
 		$Threads = $this->Threads;
 		
 		if( $Threads > $Count || $Threads <= 0 )
