@@ -88,7 +88,7 @@ class Crimp
 		$this->Callback = $Callback;
 	}
 	
-	public function SetNextUrlCallback( callable $Callback )
+	public function SetNextUrlCallback( callable $Callback ) : void
 	{
 		$this->NextUrlCallback = $Callback;
 	}
@@ -111,7 +111,7 @@ class Crimp
 	 * @throws InvalidArgumentException
 	 * @throws RuntimeException
 	 */
-	public function Go( )
+	public function Go() : void
 	{
 		if( isset( $this->CurlOptions[ CURLOPT_URL ] ) )
 		{
@@ -238,7 +238,7 @@ class Crimp
 	 * @param resource|null $Handle
 	 * @return void
 	 */
-	private function NextUrl( $Master, $Handle = null )
+	private function NextUrl( $Master, $Handle = null ) : void
 	{
 		$Obj = array_pop( $this->Urls );
 		
