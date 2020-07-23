@@ -266,6 +266,11 @@ class Crimp
 				$Url = (string)$Obj;
 		}
 		
+		if( $Handle !== null )
+		{
+			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
+		}
+		
 		if( $this->NextUrlCallback !== null )
 		{
 			call_user_func( $this->NextUrlCallback, $Handle, $Obj, $Url );
@@ -273,7 +278,6 @@ class Crimp
 		
 		if( $Handle !== null )
 		{
-			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
 			curl_multi_add_handle( $Master, $Handle );
 		}
 		
