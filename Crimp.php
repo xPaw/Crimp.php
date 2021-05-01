@@ -20,6 +20,13 @@ class Crimp
 	public $UrlPrefix = '';
 	
 	/**
+	 * @var string String to append to all URLs
+	 *
+	 * Use this to save memory when sending a lot of requests to same host
+	 */
+	public $UrlAppend = '';
+	
+	/**
 	 * @var int How many concurrent requests should be going at the same time
 	 */
 	public $Threads = 10;
@@ -268,7 +275,7 @@ class Crimp
 		
 		if( $Handle !== null )
 		{
-			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url );
+			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url . $this->UrlAppend );
 		}
 		
 		if( $this->NextUrlCallback !== null )
