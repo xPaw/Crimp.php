@@ -158,7 +158,7 @@ class Crimp
 			$Threads = $Count;
 		}
 		
-		$Master = curl_multi_init( );
+		$MultiHandle = curl_multi_init( );
 		
 		while( $Threads-- > 0 )
 		{
@@ -166,7 +166,7 @@ class Crimp
 			
 			if( $this->CurrentType === 'resource' )
 			{
-				$this->NextUrl( $Master );
+				$this->NextUrl( $MultiHandle );
 
 				continue;
 			}
@@ -175,26 +175,26 @@ class Crimp
 			
 			curl_setopt_array( $Handle, $this->CurlOptions );
 			
-			$this->NextUrl( $Master, $Handle );
+			$this->NextUrl( $MultiHandle, $Handle );
 		}
 		
 		$Repeats = 0;
 
 		do
 		{
-			if( curl_multi_exec( $Master, $Running ) !== CURLM_OK )
+			if( curl_multi_exec( $MultiHandle, $Running ) !== CURLM_OK )
 			{
-				throw new \RuntimeException( 'curl_multi_exec failed. error: ' . curl_multi_errno( $Master ) );
+				throw new \RuntimeException( 'curl_multi_exec failed. error: ' . curl_multi_errno( $MultiHandle ) );
 			}
 			
-			while( $Done = curl_multi_info_read( $Master ) )
+			while( $Done = curl_multi_info_read( $MultiHandle ) )
 			{
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 				
 				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ (int)$Handle ] );
 				
-				curl_multi_remove_handle( $Master, $Handle );
+				curl_multi_remove_handle( $MultiHandle, $Handle );
 				
 				if( $Count > 0 )
 				{
@@ -202,7 +202,7 @@ class Crimp
 					
 					$Count--;
 					
-					$this->NextUrl( $Master, $Handle );
+					$this->NextUrl( $MultiHandle, $Handle );
 				}
 				else
 				{
@@ -214,11 +214,11 @@ class Crimp
 			
 			if( $Running )
 			{
-				$Descriptors = curl_multi_select( $Master, 0.1 );
+				$Descriptors = curl_multi_select( $MultiHandle, 0.1 );
 
-				if( $Descriptors === -1 && curl_multi_errno( $Master ) !== CURLM_OK )
+				if( $Descriptors === -1 && curl_multi_errno( $MultiHandle ) !== CURLM_OK )
 				{
-					throw new \RuntimeException( 'curl_multi_select failed. error: ' . curl_multi_errno( $Master ) );
+					throw new \RuntimeException( 'curl_multi_select failed. error: ' . curl_multi_errno( $MultiHandle ) );
 				}
 
 				// count number of repeated zero numfds
@@ -237,15 +237,15 @@ class Crimp
 		}
 		while( $Running );
 		
-		curl_multi_close( $Master );
+		curl_multi_close( $MultiHandle );
 	}
 	
 	/**
-	 * @param resource $Master
+	 * @param resource $MultiHandle
 	 * @param resource|null $Handle
 	 * @return void
 	 */
-	private function NextUrl( $Master, $Handle = null ) : void
+	private function NextUrl( $MultiHandle, $Handle = null ) : void
 	{
 		$Obj = array_pop( $this->Urls );
 		
@@ -257,7 +257,7 @@ class Crimp
 					curl_close( $Handle );
 				}
 				
-				curl_multi_add_handle( $Master, $Obj );
+				curl_multi_add_handle( $MultiHandle, $Obj );
 				$this->CurrentHandles[ (int)$Obj ] = null;
 				return;
 
@@ -285,7 +285,7 @@ class Crimp
 		
 		if( $Handle !== null )
 		{
-			curl_multi_add_handle( $Master, $Handle );
+			curl_multi_add_handle( $MultiHandle, $Handle );
 		}
 		
 		$this->CurrentHandles[ (int)$Handle ] = $Obj;
