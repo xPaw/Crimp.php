@@ -32,15 +32,7 @@ class Crimp
 	public int $Threads = 10;
 
 	/**
-	 * @var bool Set to true to preserve order of passed in $Urls
-	 *
-	 * array_pop is used for better performance, thus the requests are executed backwards
-	 * Setting this to true performs array_reverse on the urls
-	 */
-	public bool $PreserveOrder = false;
-
-	/**
-	 * @var array Links to fetch.
+	 * @var array<string|array|object> Links to fetch.
 	 *
 	 * Links are removed from this array during Go() function's runtime.
 	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow).
@@ -51,21 +43,22 @@ class Crimp
 	public array $Urls = [];
 
 	/**
-	 * @var callable Callback to be called on every executed url
+	 * @var callable Callback to be called with the data of executed request
 	 *
 	 * Callback
 	 */
 	public $Callback;
 
 	/**
-	 * @var callable Callback to be called on every executed url
+	 * @var ?callable Callback to be called on every executed url
 	 *
 	 * Callback
 	 */
-	public $NextUrlCallback = null;
+	public $NextUrlCallback;
 
 	/**
 	 * @var array cURL options to be set on each handle
+	 *
 	 * @see https://php.net/curl_setopt
 	 */
 	public array $CurlOptions =
@@ -76,16 +69,19 @@ class Crimp
 		CURLOPT_RETURNTRANSFER => 1,
 	];
 
+	/** @var SplQueue<string|array|object> */
+	private SplQueue $Queue;
+
+	/** @var array<int, string|array|object> */
+	private array $CurrentHandles = [];
+
 	/**
-	 * Initializes a new instance of the Crimp class
-	 *
-	 * @param callable $Callback Callback
-	 *
-	 * @throws RuntimeException
+	 * Initializes a new instance of the Crimp class.
 	 */
 	public function __construct( callable $Callback )
 	{
 		$this->Callback = $Callback;
+		$this->Queue = new SplQueue();
 	}
 
 	public function SetNextUrlCallback( callable $Callback ) : void
@@ -93,23 +89,13 @@ class Crimp
 		$this->NextUrlCallback = $Callback;
 	}
 
-	/**
-	 * @var string|null
-	 */
-	private $CurrentType;
+	public function Add( string|array|object $Url ) : void
+	{
+		$this->Queue->enqueue( $Url );
+	}
 
 	/**
-	 * @var array
-	 */
-	private $CurrentHandles = [];
-
-	/**
-	 * Runs the multi curl
-	 *
-	 * @return void
-	 *
-	 * @throws InvalidArgumentException
-	 * @throws RuntimeException
+	 * Runs the multi curl.
 	 */
 	public function Go() : void
 	{
@@ -118,31 +104,20 @@ class Crimp
 			throw new InvalidArgumentException( 'cURL options must not contain CURLOPT_URL, it is set during run time' );
 		}
 
-		$Count = count( $this->Urls );
+		// Legacy?
+		foreach( $this->Urls as $Url )
+		{
+			$this->Queue->enqueue( $Url );
+		}
+
+		$this->Urls = [];
+
+		$Count = $this->Queue->count();
 
 		if( $Count === 0 )
 		{
 			throw new InvalidArgumentException( 'No URLs to fetch' );
 		}
-
-		if( $this->PreserveOrder )
-		{
-			$this->Urls = array_reverse( $this->Urls );
-		}
-
-		$FirstHandle = reset( $this->Urls );
-
-		if( is_a( $FirstHandle, 'CurlHandle' ) )
-		{
-			// Since PHP8, curl_init returns CurlHandle instead of a resource
-			$this->CurrentType = 'resource';
-		}
-		else
-		{
-			$this->CurrentType = gettype( $FirstHandle );
-		}
-
-		unset( $FirstHandle );
 
 		$Threads = $this->Threads;
 
@@ -155,15 +130,6 @@ class Crimp
 
 		while( $Threads-- > 0 )
 		{
-			$Count--;
-
-			if( $this->CurrentType === 'resource' )
-			{
-				$this->NextUrl( $MultiHandle );
-
-				continue;
-			}
-
 			$Handle = curl_init( );
 
 			curl_setopt_array( $Handle, $this->CurlOptions );
@@ -175,10 +141,7 @@ class Crimp
 
 		do
 		{
-			if( curl_multi_exec( $MultiHandle, $Running ) !== CURLM_OK )
-			{
-				throw new RuntimeException( 'curl_multi_exec failed. error: ' . curl_multi_errno( $MultiHandle ) );
-			}
+			curl_multi_exec( $MultiHandle, $Running ); // libcurl = curl_multi_perform
 
 			while( $Done = curl_multi_info_read( $MultiHandle ) )
 			{
@@ -189,13 +152,10 @@ class Crimp
 
 				curl_multi_remove_handle( $MultiHandle, $Handle );
 
-				if( $Count > 0 )
+				if( !$this->Queue->isEmpty() )
 				{
-					$Running = 1;
-
-					$Count--;
-
 					$this->NextUrl( $MultiHandle, $Handle );
+					$Running = 1;
 				}
 				else
 				{
@@ -205,12 +165,7 @@ class Crimp
 
 			if( $Running )
 			{
-				$Descriptors = curl_multi_select( $MultiHandle, 0.1 );
-
-				if( $Descriptors === -1 && curl_multi_errno( $MultiHandle ) !== CURLM_OK )
-				{
-					throw new RuntimeException( 'curl_multi_select failed. error: ' . curl_multi_errno( $MultiHandle ) );
-				}
+				$Descriptors = curl_multi_select( $MultiHandle, 0.1 ); // libcurl = curl_multi_wait
 
 				// count number of repeated zero numfds
 				if( $Descriptors === 0 )
@@ -227,47 +182,49 @@ class Crimp
 			}
 		}
 		while( $Running );
-
-		curl_multi_close( $MultiHandle );
 	}
 
-	private function NextUrl( CurlMultiHandle $MultiHandle, CurlHandle $Handle = null ) : void
+	private function NextUrl( CurlMultiHandle $MultiHandle, CurlHandle $Handle ) : void
 	{
-		$Obj = array_pop( $this->Urls );
+		$Obj = $this->Queue->dequeue();
+		$Url = null;
 
-		switch( $this->CurrentType )
+		switch( gettype( $Obj ) )
 		{
-			case 'resource':
-				curl_multi_add_handle( $MultiHandle, $Obj );
-				$this->CurrentHandles[ (int)$Obj ] = null;
-				return;
-
-			case 'object':
-				$Url = $Obj->Url;
-				break;
-
 			case 'array':
+				/** @var array $Obj */
 				$Url = $Obj[ 'Url' ];
 				break;
 
+			case 'object':
+				if( is_a( $Obj, 'CurlHandle' ) )
+				{
+					/** @var CurlHandle $Obj */
+					$Handle = $Obj;
+				}
+				else
+				{
+					/** @var object $Obj */
+					$Url = $Obj->Url;
+				}
+
+				break;
+
 			default:
-				$Url = (string)$Obj;
+				$Url = $Obj;
 		}
 
-		if( $Handle !== null )
+		if( $Url !== null )
 		{
 			curl_setopt( $Handle, CURLOPT_URL, $this->UrlPrefix . $Url . $this->UrlAppend );
 		}
 
 		if( $this->NextUrlCallback !== null )
 		{
-			call_user_func( $this->NextUrlCallback, $Handle, $Obj, $Url );
+			call_user_func( $this->NextUrlCallback, $Handle, $Obj );
 		}
 
-		if( $Handle !== null )
-		{
-			curl_multi_add_handle( $MultiHandle, $Handle );
-		}
+		curl_multi_add_handle( $MultiHandle, $Handle );
 
 		$this->CurrentHandles[ (int)$Handle ] = $Obj;
 	}
