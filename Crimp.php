@@ -34,25 +34,22 @@ class Crimp
 	/**
 	 * @var array<string|object|array{Url: string}> Links to fetch.
 	 *
-	 * Links are removed from this array during Go() function's runtime.
-	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow).
-	 *
-	 * If the array contains arrays or objects, 'Url' property will be accessed.
-	 * First element in the array is used to determine the type.
+	 * Any value in this array will be queued when `Go()` is called.
+	 * This array is a left over for simplicity. Consider using `Add()` method.
 	 */
 	public array $Urls = [];
 
 	/**
 	 * @var callable(CurlHandle, string, string|object|array{Url: string}): void Callback to be called with the data of executed request
 	 *
-	 * Callback
+	 * Callback to be called with the data of executed request.
 	 */
 	public $Callback;
 
 	/**
 	 * @var null|callable(CurlHandle, string|object|array{Url: string}): void Callback to be called on every executed url
 	 *
-	 * Callback
+	 * Callback to be called on every executed url.
 	 */
 	public $NextUrlCallback;
 
@@ -63,10 +60,10 @@ class Crimp
 	 */
 	public array $CurlOptions =
 	[
-		CURLOPT_ENCODING       => '',
+		CURLOPT_RETURNTRANSFER => 1, // Always return a string instead of directly outputting.
+		CURLOPT_ENCODING       => '', // Empty string tells cURL to send a header containing all supported encoding types.
 		CURLOPT_TIMEOUT        => 30,
 		CURLOPT_CONNECTTIMEOUT => 10,
-		CURLOPT_RETURNTRANSFER => 1,
 	];
 
 	/** @var SplQueue<string|object|array{Url: string}> */
