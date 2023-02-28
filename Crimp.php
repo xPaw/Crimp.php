@@ -32,7 +32,7 @@ class Crimp
 	public int $Threads = 10;
 
 	/**
-	 * @var array<string|array|object> Links to fetch.
+	 * @var array<string|object|array{Url: string}> Links to fetch.
 	 *
 	 * Links are removed from this array during Go() function's runtime.
 	 * A field is used to conserve memory (passing an argument does a copy, and byref is slow).
@@ -43,21 +43,21 @@ class Crimp
 	public array $Urls = [];
 
 	/**
-	 * @var callable Callback to be called with the data of executed request
+	 * @var callable(CurlHandle, string, string|object|array{Url: string}): void Callback to be called with the data of executed request
 	 *
 	 * Callback
 	 */
 	public $Callback;
 
 	/**
-	 * @var ?callable Callback to be called on every executed url
+	 * @var null|callable(CurlHandle, string|object|array{Url: string}): void Callback to be called on every executed url
 	 *
 	 * Callback
 	 */
 	public $NextUrlCallback;
 
 	/**
-	 * @var array cURL options to be set on each handle
+	 * @var array<int, mixed> cURL options to be set on each handle
 	 *
 	 * @see https://php.net/curl_setopt
 	 */
@@ -69,10 +69,10 @@ class Crimp
 		CURLOPT_RETURNTRANSFER => 1,
 	];
 
-	/** @var SplQueue<string|array|object> */
+	/** @var SplQueue<string|object|array{Url: string}> */
 	private SplQueue $Queue;
 
-	/** @var array<int, string|array|object> */
+	/** @var array<int, string|object|array{Url: string}> */
 	private array $CurrentHandles = [];
 
 	/**
@@ -89,6 +89,7 @@ class Crimp
 		$this->NextUrlCallback = $Callback;
 	}
 
+	/** @param string|object|array{Url: string} $Url */
 	public function Add( string|array|object $Url ) : void
 	{
 		$this->Queue->enqueue( $Url );
@@ -192,7 +193,7 @@ class Crimp
 		switch( gettype( $Obj ) )
 		{
 			case 'array':
-				/** @var array $Obj */
+				/** @var array{Url: string} $Obj */
 				$Url = $Obj[ 'Url' ];
 				break;
 
