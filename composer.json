@@ -1,13 +1,17 @@
 {
 	"name": "xpaw/crimp",
-	"description": "A dead simple multi curl implementation, optimized for high concurrency",
+	"description": "A simple multi curl implementation, optimized for high concurrency.",
 	"license": "MIT",
 	"homepage": "https://github.com/xPaw/Crimp.php",
 	"keywords":
 	[
-		"rolling",
 		"curl",
-		"async"
+		"async",
+		"asynchronous",
+		"multi",
+		"parallel",
+		"rolling",
+		"guzzle"
 	],
 	"require":
 	{

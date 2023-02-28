@@ -1,6 +1,6 @@
 # Crimp [![Packagist](https://img.shields.io/packagist/dt/xpaw/crimp.svg)](https://packagist.org/packages/xpaw/crimp)
 
-A dead simple multi curl implementation.
+A simple multi curl implementation, optimized for high concurrency.
 
 This is practically a bare bones implemention.
 Retrying, HTTP code checking and other stuff is up to the user.
