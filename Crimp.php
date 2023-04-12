@@ -133,7 +133,15 @@ class Crimp
 			curl_setopt_array( $Handle, $this->CurlOptions );
 
 			$this->NextUrl( $MultiHandle, $Handle );
+
+			// Move things along while creating handles, otherwise with many threads there may be issues with SSL connections
+			if( $Threads % 20 === 0 )
+			{
+				curl_multi_exec( $MultiHandle, $Running );
+			}
 		}
+
+		unset( $Threads, $Count, $Url );
 
 		$Repeats = 0;
 
