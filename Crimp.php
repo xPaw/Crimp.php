@@ -67,7 +67,7 @@ class Crimp
 	];
 
 	/** @var SplQueue<string|object|array{Url: string}> */
-	private SplQueue $Queue;
+	private readonly SplQueue $Queue;
 
 	/** @var array<int, string|object|array{Url: string}> */
 	private array $CurrentHandles = [];
@@ -151,6 +151,7 @@ class Crimp
 
 			while( $Done = curl_multi_info_read( $MultiHandle ) )
 			{
+				/** @var CurlHandle $Handle */
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 
@@ -210,7 +211,7 @@ class Crimp
 				}
 				else
 				{
-					/** @var object $Obj */
+					/** @var object{Url: string} $Obj */
 					$Url = $Obj->Url;
 				}
 
