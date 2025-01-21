@@ -36,7 +36,7 @@ function CrimpCallback( CurlHandle $Handle, string $Data, string $Url ) : void
 	printf(
 		"%.4f | %-30s | %s (original: %s)\n",
 		$Time,
-		substr( $Title[ 1 ], 0, 30 ),
+		substr( $Title[ 1 ] ?? '', 0, 30 ),
 		curl_getinfo( $Handle, CURLINFO_EFFECTIVE_URL ),
 		$Url
 	);
