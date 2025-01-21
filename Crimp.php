@@ -32,7 +32,7 @@ class Crimp
 	public int $Threads = 10;
 
 	/**
-	 * @var array<string|object|array{Url: string}> Links to fetch.
+	 * @var array<string|int|object|array{Url: string}> Links to fetch.
 	 *
 	 * Any value in this array will be queued when `Go()` is called.
 	 * This array is a left over for simplicity. Consider using `Add()` method.
@@ -40,14 +40,14 @@ class Crimp
 	public array $Urls = [];
 
 	/**
-	 * @var callable(CurlHandle, string, string|object|array{Url: string}): void Callback to be called with the data of executed request
+	 * @var callable(CurlHandle, string, string|int|object|array{Url: string}): void Callback to be called with the data of executed request
 	 *
 	 * Callback to be called with the data of executed request.
 	 */
 	public $Callback;
 
 	/**
-	 * @var null|callable(CurlHandle, string|object|array{Url: string}): void Callback to be called on every executed url
+	 * @var null|callable(CurlHandle, string|int|object|array{Url: string}): void Callback to be called on every executed url
 	 *
 	 * Callback to be called on every executed url.
 	 */
@@ -66,28 +66,32 @@ class Crimp
 		CURLOPT_CONNECTTIMEOUT => 10,
 	];
 
-	/** @var SplQueue<string|object|array{Url: string}> */
+	/** @var SplQueue<string|int|object|array{Url: string}> */
 	private readonly SplQueue $Queue;
 
-	/** @var array<int, string|object|array{Url: string}> */
-	private array $CurrentHandles = [];
+	/** @var WeakMap<object, string|int|object|array{Url: string}> */
+	private WeakMap $CurrentHandles;
 
 	/**
 	 * Initializes a new instance of the Crimp class.
+	 *
+	 * @param callable(CurlHandle, string, string|int|object|array): void $Callback
 	 */
 	public function __construct( callable $Callback )
 	{
 		$this->Callback = $Callback;
+		$this->CurrentHandles = new WeakMap();
 		$this->Queue = new SplQueue();
 	}
 
+	/** @param callable(CurlHandle, string|int|object|array): void $Callback */
 	public function SetNextUrlCallback( callable $Callback ) : void
 	{
 		$this->NextUrlCallback = $Callback;
 	}
 
-	/** @param string|object|array{Url: string} $Url */
-	public function Add( string|array|object $Url ) : void
+	/** @param string|int|object|array{Url: string} $Url */
+	public function Add( string|int|array|object $Url ) : void
 	{
 		$this->Queue->enqueue( $Url );
 	}
@@ -155,7 +159,7 @@ class Crimp
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 
-				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ (int)$Handle ] );
+				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ $Handle ] );
 
 				curl_multi_remove_handle( $MultiHandle, $Handle );
 
@@ -166,7 +170,7 @@ class Crimp
 				}
 				else
 				{
-					unset( $this->CurrentHandles[ (int)$Handle ] );
+					unset( $this->CurrentHandles[ $Handle ] );
 				}
 			}
 
@@ -233,6 +237,6 @@ class Crimp
 
 		curl_multi_add_handle( $MultiHandle, $Handle );
 
-		$this->CurrentHandles[ (int)$Handle ] = $Obj;
+		$this->CurrentHandles[ $Handle ] = $Obj;
 	}
 }
