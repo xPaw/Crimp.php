@@ -128,12 +128,17 @@ class Crimp
 			$Threads = $Count;
 		}
 
+		$ShareHandle = curl_share_init();
+		curl_share_setopt( $ShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_PSL );
+		curl_share_setopt( $ShareHandle, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS );
+
 		$MultiHandle = curl_multi_init( );
 
 		while( $Threads-- > 0 )
 		{
 			$Handle = curl_init( );
 
+			curl_setopt( $Handle, CURLOPT_SHARE, $ShareHandle );
 			curl_setopt_array( $Handle, $this->CurlOptions );
 
 			$this->NextUrl( $MultiHandle, $Handle );
