@@ -136,6 +136,7 @@ class Crimp
 
 		while( $Threads-- > 0 )
 		{
+			// Note: If curl objects are queued, then this handle is pointless and will not be used
 			$Handle = curl_init( );
 
 			curl_setopt( $Handle, CURLOPT_SHARE, $ShareHandle );
@@ -213,8 +214,10 @@ class Crimp
 				break;
 
 			case 'object':
-				if( is_a( $Obj, 'CurlHandle' ) )
+				if( is_a( $Obj, CurlHandle::class ) )
 				{
+					unset( $this->CurrentHandles[ $Handle ] );
+
 					/** @var CurlHandle $Obj */
 					$Handle = $Obj;
 				}
