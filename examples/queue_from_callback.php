@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../Crimp.php';
 
-$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp = new Crimp( 'QueueCallback' );
 $Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
 
 $Crimp->Add( [
@@ -13,8 +13,10 @@ $Crimp->Add( [
 $Crimp->Go();
 
 // $Url here will be the original array that was passed to Add()
-function CrimpCallback( CurlHandle $Handle, string $Data, array $OriginalArray ) : void
+/** @param array{Url: string, Count: int} $OriginalArray */
+function QueueCallback( CurlHandle $Handle, string $Data, array $OriginalArray ) : void
 {
+	/** @var Crimp<array{Url: string, Count: int}> $Crimp */
 	global $Crimp;
 
 	echo curl_getinfo( $Handle, CURLINFO_EFFECTIVE_URL ) . PHP_EOL;

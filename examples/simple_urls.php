@@ -5,7 +5,7 @@ require __DIR__ . '/../Crimp.php';
 $TotalTime = 0.0;
 $StartTime = microtime( true );
 
-$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp = new Crimp( 'SimpleUrlCallback' );
 $Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
 
 $Crimp->Urls =
@@ -24,8 +24,9 @@ printf( "\nExecution time: %.4f\n", $FinalTime );
 printf( "Total cURL time: %.4f\n", $TotalTime );
 
 // $Url here will be the original string that was passed to $Crimp->Urls
-function CrimpCallback( CurlHandle $Handle, string $Data, string $Url ) : void
+function SimpleUrlCallback( CurlHandle $Handle, string $Data, string $Url ) : void
 {
+	/** @var float $TotalTime */
 	global $TotalTime;
 
 	preg_match( '/<title[^>]*>(.*?)<\/title>/', $Data, $Title );

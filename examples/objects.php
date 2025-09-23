@@ -14,7 +14,7 @@ class RequestUrl
 	}
 }
 
-$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp = new Crimp( 'ObjectCallback' );
 $Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
 
 $Crimp->Add( new RequestUrl( 'https://cloudflare.com' ) );
@@ -25,7 +25,7 @@ $Crimp->Add( new RequestUrl( 'https://www.yahoo.com' ) );
 $Crimp->Go();
 
 // $Url here will be the RequestUrl object that was queued
-function CrimpCallback( CurlHandle $Handle, string $Data, RequestUrl $Request ) : void
+function ObjectCallback( CurlHandle $Handle, string $Data, RequestUrl $Request ) : void
 {
 	preg_match( '/<title[^>]*>(.*?)<\/title>/', $Data, $Title );
 	

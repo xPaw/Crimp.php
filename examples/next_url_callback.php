@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../Crimp.php';
 
-$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp = new Crimp( 'NextUrlExampleCallback' );
 
 // This callback is called on every executed url just before it is executed
 $Crimp->NextUrlCallback = 'NextUrlCallback';
@@ -14,7 +14,7 @@ $Crimp->Add( '4' );
 
 $Crimp->Go();
 
-function CrimpCallback( CurlHandle $Handle, string $Data, string $Request ) : void
+function NextUrlExampleCallback( CurlHandle $Handle, string $Data, string $Request ) : void
 {
 	preg_match( '/<title[^>]*>(.*?)<\/title>/', $Data, $Title );
 	

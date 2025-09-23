@@ -18,6 +18,14 @@
 		"php": ">=8.1",
 		"ext-curl": "*"
 	},
+	"require-dev":
+	{
+		"phpstan/phpstan": "^2.1"
+	},
+	"scripts":
+	{
+		"test": "phpstan analyse Crimp.php examples --level max"
+	},
 	"autoload":
 	{
 		"files":

@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../Crimp.php';
 
-$Crimp = new Crimp( 'CrimpCallback' );
+$Crimp = new Crimp( 'ArrayCallback' );
 $Crimp->CurlOptions[ CURLOPT_FOLLOWLOCATION ] = 1;
 
 // When queueing arrays, they must contain a `Url` key
@@ -11,7 +11,7 @@ $Crimp->Add( [ 'Url' => 'https://example.com' ] );
 $Crimp->Go();
 
 /** @param array{Url: string} $Request */
-function CrimpCallback( CurlHandle $Handle, string $Data, array $Request ) : void
+function ArrayCallback( CurlHandle $Handle, string $Data, array $Request ) : void
 {
 	preg_match( '/<title[^>]*>(.*?)<\/title>/', $Data, $Title );
 	
