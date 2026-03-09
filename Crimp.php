@@ -9,6 +9,7 @@ declare(strict_types=1);
  *
  * @author Pavel Djundik
  * @license MIT
+ *
  * @template T of string|int|object{Url: string}|array{Url: string}|CurlHandle
  *           T represents the URL type: string/int for simple URLs, object/array with Url property for complex requests, or CurlHandle for pre-configured requests
  */
@@ -42,7 +43,7 @@ class Crimp
 	public array $Urls = [];
 
 	/**
-	 * @var callable(CurlHandle, string, T): void Callback to be called with the data of executed request
+	 * @var callable(CurlHandle, string, T, self<T>): void Callback to be called with the data of executed request
 	 *
 	 * Callback to be called with the data of executed request.
 	 */
@@ -77,7 +78,7 @@ class Crimp
 	/**
 	 * Initializes a new instance of the Crimp class.
 	 *
-	 * @param callable(CurlHandle, string, T): void $Callback
+	 * @param callable(CurlHandle, string, T, self<T>): void $Callback
 	 */
 	public function __construct( callable $Callback )
 	{
@@ -167,7 +168,7 @@ class Crimp
 				$Handle = $Done[ 'handle' ];
 				$Data   = curl_multi_getcontent( $Handle );
 
-				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ $Handle ] );
+				call_user_func( $this->Callback, $Handle, $Data, $this->CurrentHandles[ $Handle ], $this );
 
 				curl_multi_remove_handle( $MultiHandle, $Handle );
 
